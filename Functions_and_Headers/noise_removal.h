@@ -7,8 +7,26 @@
 // Creation Date : 	FEB 14  -2012.  Rights Reserved
 //~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*
 
+#ifndef noiserem_H
+#define noiserem_H
 
 
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include <sys/stat.h>
+#include <iostream>
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/highgui/highgui.hpp"
+
+using namespace cv;
+
+using namespace std;
+
+#include "global_variables.h"
+#include "structures.h"
+#include "writeimage.h"
+#include "smoothing.h"
 
 
 
@@ -1035,7 +1053,7 @@ void noise_removal()
 	name="temp/output_image.pgm";
 	writeimage(name,resultimage,newrow,newcol);
 	
-		
+	printf("Done Noise\n");	
 	
 /*-------------------------------------------------------------------------------------------------------------------------*/	
 
@@ -1058,3 +1076,5 @@ void noise_removal()
 
 
 /*---------------------------------------------------------------------------------------------------------------------------------------------------*/
+
+#endif

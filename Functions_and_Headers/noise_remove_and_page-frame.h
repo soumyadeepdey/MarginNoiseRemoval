@@ -1,4 +1,25 @@
 
+#ifndef noiserem_pgframe_H
+#define noiserem_pgframe_H
+
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include <sys/stat.h>
+#include <iostream>
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/highgui/highgui.hpp"
+
+using namespace cv;
+using namespace std;
+
+#include "global_variables.h"
+#include "structures.h"
+#include "writeimage.h"
+#include "smoothing.h"
+#include "morphologi.h"
+
+
 
 void noise_removal()
 {
@@ -94,7 +115,12 @@ void noise_removal()
 			graphics[i].ymax=originalcomponent[i].ymax;
 			graphics[i].centroidx=((graphics[i].xmax-graphics[i].xmin)/2)+graphics[i].xmin;
 			graphics[i].centroidy=((graphics[i].ymax-graphics[i].ymin)/2)+graphics[i].ymin;
+			//printf("G comp \n");
 			//j=j+1;
+		}
+		else
+		{
+		       graphics[i].start = NULL;
 		}
 	}
 	j=0;
@@ -199,13 +225,17 @@ void noise_removal()
 	printf("avg-height=%d\n",avg_height);
 
 
+	
 /*-----------------------------------------------graphics likely to be text--------------------------------------------------------------------------*/
 
 	for(i=0;i<tncc;i++)
 	{
 		if(rgraphics[i].start!=NULL)
 		{
-			if(rgraphics[i].xmax-rgraphics[i].xmin < 1.5 * avg_height)
+		        float th = 2 * avg_height;
+			int tt = (int) th;
+			//printf("height = %d and th = %d\n",rgraphics[i].xmax-rgraphics[i].xmin,tt);
+			if(rgraphics[i].xmax-rgraphics[i].xmin < tt)
 			{
 				textpart[i].start=rgraphics[i].start;
 				textpart[i].xmin=rgraphics[i].xmin;
@@ -226,7 +256,28 @@ void noise_removal()
 
 /*-------------------------------------------------------------------------------------------------------------------------*/
 
+/*-----------------------------------------------graphics likely to be noise--------------------------------------------------------------------------*/
 
+	
+	for(i=0;i<tncc;i++)
+	{
+		if(rgraphics[i].start!=NULL)
+		{
+			float th = 0.1*col; 
+			int tt = (int) th;
+			if(rgraphics[i].ymax-rgraphics[i].ymin < tt)
+			{
+				
+				//printf("width =%d and th = %d",rgraphics[i].ymax-rgraphics[i].ymin, tt);
+				rgraphics[i].start=NULL;
+				//printf("Hello\n");
+			}
+		}
+	}
+	
+
+
+/*-------------------------------------------------------------------------------------------------------------------------*/
 	// graphics part
 
 	
@@ -256,8 +307,10 @@ void noise_removal()
 			}
 		}
 	}
-
-
+/*
+	name="step/graphics.pgm";
+	writeimage(name,temprgimage,row,col);
+*/
 /*-------------------------------------------------------------------------------------------------------------------------*/
 
 
@@ -399,7 +452,9 @@ void noise_removal()
 	for(i=0;i<nwords;i++)
 	{
 		if(words[i].xmax-words[i].xmin<(avg_height))
-			words[i].start=NULL;			
+			words[i].start=NULL;
+		if(words[i].xmax-words[i].xmin > 5* avg_height)
+			words[i].start=NULL;
 	}
 
 	
@@ -429,10 +484,11 @@ void noise_removal()
 			}
 		}
 	}
-/*
+
+	/*
 	name="step/word_noiseremoved1.pgm";
 	writeimage(name,image_with_words,row,col);
-	*/
+	  */
 
 	for(i=0;i<(row*col);i++)
 	{
@@ -441,11 +497,12 @@ void noise_removal()
 		else
 			image_with_words[i]=255;
 	}
+	
 	/*
 	name="step/word_noiseremoved2.pgm";
 	writeimage(name,image_with_words,row,col);
-
 	*/
+	
 
 /*---------------------------------------------------------------------------------------------------------*/
 
@@ -485,8 +542,8 @@ void noise_removal()
      /*
      name="step/line_boundary.pgm";
 	writeimage(name,bextractline,row,col);
-	
 	*/
+	
 
 /*---------------------------------------------------------------------------------------------------------*/
 
@@ -586,7 +643,7 @@ void noise_removal()
 		}
 	}
 
-/*
+	/*
 	name="step/line_noiserm.pgm";
 	writeimage(name,horizental_smoothed_image,row,col);
 	*/
@@ -598,9 +655,9 @@ void noise_removal()
 
 	int *vs_on_hs;
 	vs_on_hs=(int *)malloc(row*col*sizeof(int));
-	vs_on_hs=vertical_smoothing(horizontal_smoothed_image_smallremoved,avg_height * 1.5); // vertically gap filling the image
+	vs_on_hs=vertical_smoothing(horizontal_smoothed_image_smallremoved,avg_height * 1.7); // vertically gap filling the image
 	
-/*
+	/*
 	name="step/concentarted_text-area.pgm";
 	writeimage(name,vs_on_hs,row,col);
 	*/
@@ -612,7 +669,7 @@ void noise_removal()
 	int *bextract;
 	bextract=(int *)malloc(row*col*sizeof(int));
 	bextract=boundaryextraction(vs_on_hs);
-/*
+	/*
 	name="step/bextract_concentarted_text-area.pgm";
 	writeimage(name,bextract,row,col);
 	*/
@@ -715,7 +772,7 @@ void noise_removal()
 		newparagraph[i].ymax=paragraph[i].ymax;
 		newparagraph[i].centroidx=((newparagraph[i].xmax-newparagraph[i].xmin)/2)+newparagraph[i].xmin;
 		newparagraph[i].centroidy=((newparagraph[i].ymax-newparagraph[i].ymin)/2)+newparagraph[i].ymin;
-		
+		newparagraph[i].hierarchy = 1;
 	}
 
 	// for inside paragraph
@@ -726,11 +783,14 @@ void noise_removal()
 		{
 			for(j=0;j<npar;j++)
 			{
-				if(paragraph[j].xmin>paragraph[i].xmin && paragraph[j].xmax<paragraph[i].xmax && paragraph[j].ymin>paragraph[i].ymin && paragraph[j].ymax<paragraph[i].ymax && i!=j)//para within para
+			    if(i!=j)
+			    {
+				if(paragraph[j].xmin>=paragraph[i].xmin && paragraph[j].xmax<=paragraph[i].xmax && paragraph[j].ymin>=paragraph[i].ymin && paragraph[j].ymax<=paragraph[i].ymax)//para within para
 				{
-					
 					newparagraph[j].start=NULL;
+					newparagraph[j].hierarchy = -1;
 				}
+			    }
 				
 			}
 		}
@@ -745,7 +805,13 @@ void noise_removal()
 		{
 			if(newparagraph[i].ymax-newparagraph[i].ymin<col/6 )
 			{	
+				/*
 				if(newparagraph[i].xmax-newparagraph[i].xmin > row/10 && newparagraph[i].ymax-newparagraph[i].ymin < col/10)  
+				{	
+					newparagraph[i].start=NULL;
+				}
+				*/
+				if(newparagraph[i].xmax-newparagraph[i].xmin < avg_height && newparagraph[i].ymax-newparagraph[i].ymin < avg_height*3)  
 				{	
 					newparagraph[i].start=NULL;
 				}
@@ -809,11 +875,11 @@ void noise_removal()
 			rectangle(color_para,Point(newparagraph[i].ymin,newparagraph[i].xmin),Point(newparagraph[i].ymax,newparagraph[i].xmax),Scalar( 0,0,255),2,8);// RED (actual text part)
 		}
 	}
-/*
+	/*
 	name="step/actual-text-area.pgm";
 	writeimage(name,para,row,col);
+	*/
 
-*/
 
 /*-------------------------------------------------------------------------------------------------------------------------*/
 
@@ -1093,8 +1159,10 @@ void noise_removal()
 			}
 		}
 	}
-	
-	
+	/*
+	name="step/new_output_image1.pgm";
+	writeimage(name,newimage,newrow,newcol);
+	*/
 /*-------------------------------------------------------------creating result image------------------------------------------------------------*/
 	int *resultimage;
 	resultimage=(int*)malloc(newrow*newcol*sizeof(int));
@@ -1120,7 +1188,7 @@ void noise_removal()
 		}
 	}
 
-/*
+	/*
 	name="temp/output_image.pgm";
 	writeimage(name,resultimage,newrow,newcol);
 	*/
@@ -1195,17 +1263,70 @@ layoutymax=0;
 printf("LAYOUT XMIN=%d\tXMAX=%d\tYMIN=%d\tYMAX=%d\n",layoutxmin,layoutxmax,layoutymin,layoutymax);
 
 
-rectangle(color_para,Point(layoutymin,layoutxmin),Point(layoutymax,layoutxmax),Scalar( 255,128,20),5,8);
+rectangle(color_para,Point(layoutymin,layoutxmin),Point(layoutymax,layoutxmax),Scalar( 255,128,160),5,8);
 
 
-/*-----------------------------------------------------PROCESSING ON WEAK NOISE AND RETREIVING TEXT--------------------------------------------------------------------*/
-
+/*------------------------------------PROCESSING ON WEAK NOISE AND RETREIVING TEXT-------------------------------------------------*/
+	
+	for(i=0;i<npar;i++)
+	{
+	  if(weak_text[i].start!=NULL )
+	  {
+	    
+	    if(weak_text[i].xmax<=layoutxmax && weak_text[i].ymax<=layoutymax)// weak text within layout
+	    {
+	      int len = weak_text[i].ymax - weak_text[i].ymin;
+	      int wlen;
+	      if(weak_text[i].ymax >= layoutymin && weak_text[i].ymax <= layoutymax)
+		wlen = weak_text[i].ymax - layoutymin;
+	      else if(weak_text[i].ymax >= layoutymax && weak_text[i].ymin <= layoutymax)
+		wlen = layoutymax - weak_text[i].ymin;
+	      if(wlen > 0.8 * len)
+	      {
+		weak_text[i].start=NULL;
+		newparagraph[i].start=paragraph[i].start;
+		rectangle(color_para,Point(weak_text[i].ymin,weak_text[i].xmin),Point(weak_text[i].ymax,weak_text[i].xmax),Scalar( 0,160,120),2,8);//header and footer green
+	      }
+	    }
+	  }
+	}
 
 	for(i=0;i<npar;i++)
 	{
 		if(weak_text[i].start!=NULL )
 		{
-			if((weak_text[i].xmax <= layoutxmax && weak_text[i].xmin >= layoutxmin) && (weak_text[i].ymax <= layoutymax && weak_text[i].ymin >= layoutymin))
+		    if(weak_text[i].ymax-weak_text[i].ymin > 2*avg_height)
+		    {
+		  
+			if(((layoutymin - weak_text[i].ymax) < 3*avg_height) && ((weak_text[i].xmax>=layoutxmin) && (weak_text[i].xmin<=layoutxmax)))
+			{
+				weak_text[i].start=NULL;
+				
+				newparagraph[i].start=paragraph[i].start;
+				rectangle(color_para,Point(weak_text[i].ymin,weak_text[i].xmin),Point(weak_text[i].ymax,weak_text[i].xmax),Scalar( 0,255,0),2,8);//header and footer green			
+			}
+			else if(((layoutymax - weak_text[i].ymin) < 3*avg_height) && ((weak_text[i].xmax>=layoutxmin) && (weak_text[i].xmin<=layoutxmax)))
+			{
+				weak_text[i].start=NULL;
+				
+				newparagraph[i].start=paragraph[i].start;
+				rectangle(color_para,Point(weak_text[i].ymin,weak_text[i].xmin),Point(weak_text[i].ymax,weak_text[i].xmax),Scalar( 0,255,0),2,8);//header and footer green			
+			}
+			else if(((layoutxmin - weak_text[i].xmax) < 3*avg_height) && ((weak_text[i].ymax>=layoutymin) && (weak_text[i].ymin<=layoutymax)))
+			{
+				weak_text[i].start=NULL;
+				
+				newparagraph[i].start=paragraph[i].start;
+				rectangle(color_para,Point(weak_text[i].ymin,weak_text[i].xmin),Point(weak_text[i].ymax,weak_text[i].xmax),Scalar( 0,255,0),2,8);//header and footer green			
+			}
+			else if(((weak_text[i].xmin - layoutxmax) < 3*avg_height) && ((weak_text[i].ymax>=layoutymin) && (weak_text[i].ymin<=layoutymax)))
+			{
+				weak_text[i].start=NULL;
+				
+				newparagraph[i].start=paragraph[i].start;
+				rectangle(color_para,Point(weak_text[i].ymin,weak_text[i].xmin),Point(weak_text[i].ymax,weak_text[i].xmax),Scalar( 0,255,0),2,8);//header and footer green			
+			}
+			else if((weak_text[i].xmax <= layoutxmax && weak_text[i].xmin >= layoutxmin) && (weak_text[i].ymax <= layoutymax && weak_text[i].ymin >= layoutymin))
 			{
 				weak_text[i].start=NULL;
 				newparagraph[i].start=paragraph[i].start;
@@ -1218,10 +1339,22 @@ rectangle(color_para,Point(layoutymin,layoutxmin),Point(layoutymax,layoutxmax),S
 				newparagraph[i].start=paragraph[i].start;
 				rectangle(color_para,Point(weak_text[i].ymin,weak_text[i].xmin),Point(weak_text[i].ymax,weak_text[i].xmax),Scalar( 0,255,0),2,8);//header and footer green
 			}
+			/*
+			else if(weak_text[i].ymax-weak_text[i].ymin < 0.3*col && (weak_text[i].xmax-weak_text[i].xmin > 0.3*row)
+			{
+				weak_text[i].start=NULL;
+				
+				newparagraph[i].start=paragraph[i].start;
+			}*/
+		    }
 		}
 	}
+	
+	
+	
+	
 
-/*------------------------------------------------------------------------removing textual noise---------------------------------------------------------------------------------*/
+/*--------------------------------------------removing textual noise---------------------------------------------------------*/
 
 
 	for(i=0;i<npar;i++)
@@ -1237,7 +1370,7 @@ rectangle(color_para,Point(layoutymin,layoutxmin),Point(layoutymax,layoutxmax),S
 			}
 		}
 		
-		if(newparagraph[i].start==NULL )
+		if(newparagraph[i].start==NULL && newparagraph[i].hierarchy == 1)
 		{
 			for(m=newparagraph[i].xmin;m<=newparagraph[i].xmax;m++)
 			{
@@ -1305,10 +1438,10 @@ rectangle(color_para,Point(pgfrmymin,pgfrmxmin),Point(pgfrmymax,pgfrmxmax),Scala
 
 
 /*---------------------------------------------------------------------------------------------------------------------------------------------------------*/
-
+/*
 	name="resultimage.png";
 	imwrite(name,color_para);
-
+*/
 	free(outputimage);
 	free(newimage);
 	free(resultimage);
@@ -1323,3 +1456,4 @@ rectangle(color_para,Point(pgfrmymin,pgfrmxmin),Point(pgfrmymax,pgfrmxmax),Scala
 
 }
 
+#endif

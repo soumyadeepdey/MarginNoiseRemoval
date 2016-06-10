@@ -8,6 +8,18 @@
 //~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*
 
 
+#ifndef makedir_H
+#define makedir_H
+
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include <sys/stat.h>
+#include <iostream>
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/highgui/highgui.hpp"
+
+using namespace cv;
 
 
 /*-------------------------------------------------------------------------MAKE DIRECTORY FUNCTION--------------------------------------------------------------------------*/
@@ -22,3 +34,4 @@ void makedir(char *name)
 
 /*---------------------------------------------------------------------------------------------------------------------------------------------------*/
 
+#endif

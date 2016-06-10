@@ -10,6 +10,21 @@
 
 
 
+#ifndef structures_H
+#define structures_H
+
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include <sys/stat.h>
+#include <iostream>
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/highgui/highgui.hpp"
+
+using namespace cv;
+
+
+using namespace std;
 /*-------------------------------------------------------- Structure Declarations--------------------------------------------------------*/
 
 typedef struct gapping
@@ -49,7 +64,11 @@ typedef struct numberofcc
 	int ymax;
 	int centroidx;
 	int centroidy;
+	int hierarchy;
 }nocc;
 
 
 /*-----------------------------------------------------------------------------------------------------------------*/
+
+
+#endif

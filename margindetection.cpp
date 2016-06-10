@@ -133,7 +133,7 @@ int main (int argc, char *r[])
 	output_image=imread("actual_outputimage.pgm",0);
 	
 	system("rm actual_outputimage.pgm");
-	system("rm resultimage.png");
+	//system("rm resultimage.png");
 	//system ("rm -r step "); // removing folders and its content
 	//system ("rm -r temp ");  // removing folders and its content
 

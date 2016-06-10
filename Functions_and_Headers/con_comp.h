@@ -7,7 +7,23 @@
 // Creation Date : 	FEB 14  -2012.  Rights Reserved
 //~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*~^~*
 
+#ifndef con_comp_H
+#define con_comp_H
 
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include <sys/stat.h>
+#include <iostream>
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/highgui/highgui.hpp"
+
+using namespace cv;
+
+#include "global_variables.h"
+#include "structures.h"
+
+using namespace std;
 
 
 
@@ -368,3 +384,5 @@ if(tempstructuredimage[i][j].value==0&&tempstructuredimage[i][j].label!=0)
 }
 
 /*---------------------------------------------------------------------------------------------------------------------------------------------------*/
+
+#endif
